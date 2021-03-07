@@ -1,14 +1,16 @@
 /*
- Basic ESP8266 MQTT example
+ ESP8266 MQTT based on example PubSubCient
  This sketch demonstrates the capabilities of the pubsub library in combination
  with the ESP8266 board/library.
- It connects to an MQTT server then:
-  - publishes "hello world" to the topic "test" every two seconds
+ It connects to an local MQTT server then:
+  - publishes information on succesful connection to the topic "conect"
+  - publishes information about temperature and the hall senzor in room to the topic "test"
+  - as a temperature senzor I am using DS18B20  sensor and Hall sensor is KY-024
   - subscribes to the topic "test", printing out any messages
     it receives. NB - it assumes the received payloads are strings not binary
   - If the first character of the topic "inTopic" is an 1, switch ON the ESP Led,
     else switch it off
- It will reconnect to the server if the connection is lost using a blocking
+ It will reconnect to the server if the connection is lost using a non - blocking
  reconnect function. See the 'mqtt_reconnect_nonblocking' example for how to
  achieve the same result without blocking the main loop.
  To install the ESP8266 board, (using Arduino 1.6.4+):
