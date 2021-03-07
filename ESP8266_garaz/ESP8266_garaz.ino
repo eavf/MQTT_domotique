@@ -73,6 +73,8 @@ void setup_wifi() {
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
+  int state, command;
+  
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
@@ -93,8 +95,16 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   //Teraz niečo na otvorenie/zatvorenie brány......
   /*
-   * Logika veci bude, že 
+   * Logika veci bude, že Keď príte MQTT messqge, ktorá hovorí zavri, tak :
+   *  1. zistí, či je brána zavretá a ak nie, tak zavre
+   * a keď príde MQTT mesage otvor : 
+   *  1. zistí, či je už otvorená a ak nie, tak otvorí.....
   */
+
+
+
+
+  
 }
 
 boolean reconnect() {
@@ -115,11 +125,16 @@ boolean reconnect() {
 
 void setup() {
   pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
-  pinMode(HallPin, INPUT);       // Citanie hall senzora
+  pinMode(HallPin, INPUT);          // Citanie hall senzora
+  
   Serial.begin(115200);
+  
   setup_wifi();
+
+  //Setup pre MQTT clienta
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
+  
   // Start the DS18B20 sensor
   sensors.begin();
   lastReconnectAttempt = 0;
@@ -173,25 +188,5 @@ void loop()
       Serial.println(msg);
       client.publish("test", msg);
     }
-
-    //Teplota
-    /*sensors.requestTemperatures(); 
-    float temperatureC = sensors.getTempCByIndex(0);
-    float temperatureF = sensors.getTempFByIndex(0);
-    Serial.print(temperatureC);
-    Serial.println("ºC");
-    Serial.print(temperatureF);
-    Serial.println("ºF");
-    */
-    //Hall senzor
-    /*Analog
-    int analogVal = analogRead(analogPin);
-    Serial.print(analogVal);
-    Serial.print("\t");
-    //Digital Hall senzor
-    int digitalVal = digitalRead(HallPin);
-    Serial.println(digitalVal);
-    */
-
   }
 }
