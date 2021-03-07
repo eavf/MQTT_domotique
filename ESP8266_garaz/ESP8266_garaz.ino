@@ -1,16 +1,14 @@
 /*
- ESP8266 MQTT based on example PubSubCient
+ Basic ESP8266 MQTT example
  This sketch demonstrates the capabilities of the pubsub library in combination
  with the ESP8266 board/library.
- It connects to an local MQTT server then:
-  - publishes information on succesful connection to the topic "conect"
-  - publishes information about temperature and the hall senzor in room to the topic "test"
-  - as a temperature senzor I am using DS18B20  sensor and Hall sensor is KY-024
+ It connects to an MQTT server then:
+  - publishes "hello world" to the topic "test" every two seconds
   - subscribes to the topic "test", printing out any messages
     it receives. NB - it assumes the received payloads are strings not binary
   - If the first character of the topic "inTopic" is an 1, switch ON the ESP Led,
     else switch it off
- It will reconnect to the server if the connection is lost using a non - blocking
+ It will reconnect to the server if the connection is lost using a blocking
  reconnect function. See the 'mqtt_reconnect_nonblocking' example for how to
  achieve the same result without blocking the main loop.
  To install the ESP8266 board, (using Arduino 1.6.4+):
@@ -26,7 +24,7 @@
 
 // Update these with values suitable for your network.
 const char* ssid = "EaVFSmartConnect";
-const char* password = "Viligamos1?";
+const char* password = "";
 const char* mqtt_server = "10.255.1.201";
 
 //GPIO kde je teplotný senzor DS18B20 pripojený je 
@@ -93,6 +91,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
     digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
   }
 
+  //Teraz niečo na otvorenie/zatvorenie brány......
+  /*
+   * Logika veci bude, že 
+  */
 }
 
 boolean reconnect() {
@@ -166,7 +168,7 @@ void loop()
       client.publish("test", msg);
       */
       //Brána
-      snprintf (msg, MSG_BUFFER_SIZE, "#%ld,g_brana,#%ld", value, digitalVal);
+      snprintf (msg, MSG_BUFFER_SIZE, "#%ld,g_brana,%ld", value, digitalVal);
       Serial.print("Publish message: ");
       Serial.println(msg);
       client.publish("test", msg);
