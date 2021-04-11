@@ -30,6 +30,7 @@ const char* mqtt_server = "10.255.1.201";
 //GPIO kde je teplotný senzor DS18B20 pripojený je
 const int oneWireBus = 4;
 short int Do_monitor = 0;
+const short int Gar_no_cid = 1;   //Počet hall čidiel na garaži
 
 // Setup a oneWire instance to communicate with any OneWire devices
 OneWire oneWire(oneWireBus);
@@ -38,7 +39,7 @@ DallasTemperature sensors(&oneWire);
 //Hall senzor je na A0 alebo D7
 int analogPin = A0;
 int HallPin = 13;
-int G_open = 1;
+int G_open = 1;     //Terba zadefinovať PIN, ktorý bude spínať gar. spínač
 
 //Knižnice pre WiFi a MQTT
 WiFiClient espClient;
@@ -118,19 +119,28 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 
-boolean monitoring() {
-  String clientId = "ESP8266C-Garage";
-  // Attempt to connect
-  Serial.print("Attempting MQTT connection...");
-  if (client.connect(clientId.c_str())) {
-    Serial.println("connected");
-    // Once connected, publish an announcement...
-    client.publish("test", "Pripojil som sa...");
-    // ... and resubscribe
-    client.subscribe("test");
+boolean monitoring(int k) {
+  int i;
+  for (i = 0; i < Gar_no_cid; i++) {     //Gar_no_cid = počet hall čidiel na garažovej bráne
+    int digitalVal = digitalRead(HallPin);
+    snprintf (msg, MSG_BUFFER_SIZE, "#%ld, g_brana, čidlo : %ld, hodnota: %ld", k, i, digitalVal);
+    Serial.print("Publish message: ");
+    Serial.println(msg);
+    client.publish("test", msg);
   }
-  return client.connected();
 }
+
+bool matchTemplate ( const char secretWord[], const char guessTemplate[] ) {
+  //  will return true if secretWord is part of the guessTemplate 
+
+  for ( int i = 0; i < MSG_BUFFER_SIZE; i++ ) {
+    if ( secretWord[i] == guessTemplate[i] )
+      return true;
+    else
+      return false;
+    }
+  }
+
 
 
 boolean reconnect() {
@@ -191,7 +201,7 @@ void loop()
       ++value;
 
       //Digital Hall senzor
-      int digitalVal = digitalRead(HallPin);
+      //int digitalVal = digitalRead(HallPin);
       //Serial.println(digitalVal);
 
       //Teplota
@@ -211,12 +221,7 @@ void loop()
       */
       //Brána
       //Najprv, ak chceme vykonávať monitoring... tak
-      if (Do_monitor == 1){
-        snprintf (msg, MSG_BUFFER_SIZE, "#%ld, g_brana, %ld", value, digitalVal);
-        Serial.print("Publish message: ");
-        Serial.println(msg);
-        client.publish("test", msg);
-      }
+      if (Do_monitor == 1) monitoring(value);
     }
   }
 }
