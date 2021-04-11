@@ -24,11 +24,12 @@
 
 // Update these with values suitable for your network.
 const char* ssid = "EaVFSmartConnect";
-const char* password = "";
+const char* password = "Viligamos1?";
 const char* mqtt_server = "10.255.1.201";
 
-//GPIO kde je teplotný senzor DS18B20 pripojený je 
+//GPIO kde je teplotný senzor DS18B20 pripojený je
 const int oneWireBus = 4;
+short int Do_monitor = 0;
 
 // Setup a oneWire instance to communicate with any OneWire devices
 OneWire oneWire(oneWireBus);
@@ -37,12 +38,13 @@ DallasTemperature sensors(&oneWire);
 //Hall senzor je na A0 alebo D7
 int analogPin = A0;
 int HallPin = 13;
+int G_open = 1;
 
 //Knižnice pre WiFi a MQTT
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-//Premenné pre riadenie 
+//Premenné pre riadenie
 unsigned long lastMsg = 0;
 #define MSG_BUFFER_SIZE  (50)
 char msg[MSG_BUFFER_SIZE];
@@ -58,10 +60,11 @@ void setup_wifi() {
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
+  delay(250);
 
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    //Serial.printf("Connection status: %d\n", WiFi.status());
+    delay(1000);
+    Serial.printf("Connection status: %d\n", WiFi.status());
     WiFi.printDiag(Serial);
     Serial.print(".");
   }
@@ -74,38 +77,61 @@ void setup_wifi() {
 
 void callback(char* topic, byte* payload, unsigned int length) {
   int state, command;
-  
+
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
   for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
+    state = i;
   }
   Serial.println();
 
   // Switch on the LED if an 1 was received as first character
   // Toto je časť ovládania, otvorenie a zatvorenie brány
-  if ((char)payload[0] == '1') {
-    digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
+  if ((char)payload[state] == '1') {
+    digitalWrite(LED_BUILTIN, LOW);   // Turn the LED on (Note that LOW is the voltage level
     // but actually the LED is on; this is because
     // it is active low on the ESP-01)
+    //Serial.print((char)payload[state]);
+    //Serial.println();
+
+    //Brána
+    snprintf (msg, MSG_BUFFER_SIZE, "#%ld,g_brana,%ld", 4, 5);
+    Serial.print("Publish message: ");
+    Serial.println(msg);
+    client.publish("test", msg);
   } else {
-    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
+    digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off by making the voltage HIGH
+    //Serial.print((char)payload[state]);
+    //Serial.println();
   }
 
   //Teraz niečo na otvorenie/zatvorenie brány......
   /*
    * Logika veci bude, že Keď príte MQTT messqge, ktorá hovorí zavri, tak :
    *  1. zistí, či je brána zavretá a ak nie, tak zavre
-   * a keď príde MQTT mesage otvor : 
+   * a keď príde MQTT mesage otvor :
    *  1. zistí, či je už otvorená a ak nie, tak otvorí.....
   */
 
-
-
-
-  
 }
+
+
+boolean monitoring() {
+  String clientId = "ESP8266C-Garage";
+  // Attempt to connect
+  Serial.print("Attempting MQTT connection...");
+  if (client.connect(clientId.c_str())) {
+    Serial.println("connected");
+    // Once connected, publish an announcement...
+    client.publish("test", "Pripojil som sa...");
+    // ... and resubscribe
+    client.subscribe("test");
+  }
+  return client.connected();
+}
+
 
 boolean reconnect() {
   //Non-blocking verzia
@@ -116,7 +142,7 @@ boolean reconnect() {
   if (client.connect(clientId.c_str())) {
     Serial.println("connected");
     // Once connected, publish an announcement...
-    client.publish("conect", "Pripojil som sa...");
+    client.publish("test", "Pripojil som sa...");
     // ... and resubscribe
     client.subscribe("test");
   }
@@ -124,17 +150,18 @@ boolean reconnect() {
 }
 
 void setup() {
-  pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
+  pinMode(LED_BUILTIN, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
   pinMode(HallPin, INPUT);          // Citanie hall senzora
-  
+
+  Serial.println("WiFi connecting");
   Serial.begin(115200);
-  
+
   setup_wifi();
 
   //Setup pre MQTT clienta
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
-  
+
   // Start the DS18B20 sensor
   sensors.begin();
   lastReconnectAttempt = 0;
@@ -154,7 +181,7 @@ void loop()
     }
   } else {
     // Client connected
-    // Udržovať MQTT v činnosti... 
+    // Udržovať MQTT v činnosti...
     client.loop();
 
     //Pravidelné publikovanie informácii o garáži
@@ -166,10 +193,10 @@ void loop()
       //Digital Hall senzor
       int digitalVal = digitalRead(HallPin);
       //Serial.println(digitalVal);
-      
+
       //Teplota
       /*
-      sensors.requestTemperatures(); 
+      sensors.requestTemperatures();
       float temperatureC = sensors.getTempCByIndex(0);
       */
 
@@ -183,10 +210,13 @@ void loop()
       client.publish("test", msg);
       */
       //Brána
-      snprintf (msg, MSG_BUFFER_SIZE, "#%ld,g_brana,%ld", value, digitalVal);
-      Serial.print("Publish message: ");
-      Serial.println(msg);
-      client.publish("test", msg);
+      //Najprv, ak chceme vykonávať monitoring... tak
+      if (Do_monitor == 1){
+        snprintf (msg, MSG_BUFFER_SIZE, "#%ld, g_brana, %ld", value, digitalVal);
+        Serial.print("Publish message: ");
+        Serial.println(msg);
+        client.publish("test", msg);
+      }
     }
   }
 }
