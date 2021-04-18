@@ -30,8 +30,8 @@ const char* mqtt_server = "10.255.1.201";
 
 //GPIO kde je teplotný senzor DS18B20 pripojený je
 const int oneWireBus = 4;
-short int Do_monitor = 0;
-const short int Gar_no_cid = 1;   //Počet hall čidiel na garaži
+short int Do_monitor = 1;         //0 - does not monitor state / 1 - monitor state
+const short int Gar_no_cid = 1;   //Nomber of hall sensors on garage door
 
 // Setup a oneWire instance to communicate with any OneWire devices
 OneWire oneWire(oneWireBus);
@@ -88,35 +88,32 @@ void callback(char* topic, byte* payload, unsigned int length) {
     state = i;
   }
   Serial.println();
+  Serial.print("Stav monitorovania v callback je :");
+  Serial.println(Do_monitor);
 
-  // Switch on the LED if an 1 was received as first character
-  // Toto je časť ovládania, otvorenie a zatvorenie brány
+  //Open garage door
   if ((char)payload[state] == '1') {
-    digitalWrite(LED_BUILTIN, LOW);   // Turn the LED on (Note that LOW is the voltage level
-    // but actually the LED is on; this is because
-    // it is active low on the ESP-01)
-    //Serial.print((char)payload[state]);
-    //Serial.println();
+    Serial.print("State is : ");
+    Serial.print((char)payload[state]);
+    Serial.println();
+    //First test where garage doors are positionned
 
-    //Brána
-    snprintf (msg, MSG_BUFFER_SIZE, "#%ld,g_brana,%ld", 4, 5);
-    Serial.print("Publish message: ");
-    Serial.println(msg);
-    client.publish("test", msg);
+    //Open garage door if closed
+    //Instead light up built-in LED
+    digitalWrite(LED_BUILTIN, LOW);   // Turn the LED on - note that LOW is the voltage level but actually the LED is on;
   } else {
     digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off by making the voltage HIGH
-    //Serial.print((char)payload[state]);
-    //Serial.println();
+    Serial.print("State is : ");
+    Serial.print((char)payload[state]);
+    Serial.println();
   }
-
-  //Teraz niečo na otvorenie/zatvorenie brány......
-  /*
-   * Logika veci bude, že Keď príte MQTT messqge, ktorá hovorí zavri, tak :
-   *  1. zistí, či je brána zavretá a ak nie, tak zavre
-   * a keď príde MQTT mesage otvor :
-   *  1. zistí, či je už otvorená a ak nie, tak otvorí.....
-  */
-
+  
+  if ((char)payload[state] == '2') {
+    Do_monitor = 1;         //0 - does not monitor state / 1 - monitor state
+  } 
+  if ((char)payload[state] == '3') {
+    Do_monitor = 0;         //0 - does not monitor state / 1 - monitor state
+  }
 }
 
 
