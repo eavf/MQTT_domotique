@@ -24,7 +24,7 @@
 
 // Update these with values suitable for your network.
 const char* ssid = "EaVFSmartConnect";
-const char* password = "Viligamos1?";
+const char* password = "";
 const char* mqtt_server = "10.255.1.201";
 
 //GPIO kde je teplotný senzor DS18B20 pripojený je
@@ -131,7 +131,7 @@ boolean monitoring(int k) {
 }
 
 bool matchTemplate ( const char secretWord[], const char guessTemplate[] ) {
-  //  will return true if secretWord is part of the guessTemplate 
+  //  will return true if secretWord is part of the guessTemplate
 
   for ( int i = 0; i < MSG_BUFFER_SIZE; i++ ) {
     if ( secretWord[i] == guessTemplate[i] )
