@@ -21,10 +21,11 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <DallasTemperature.h>
+#include "arduino_secrets.h"
 
 // Update these with values suitable for your network.
-const char* ssid = "EaVFSmartConnect";
-const char* password = "";
+const char* ssid = SSID_a;
+const char* password = PASS;
 const char* mqtt_server = "10.255.1.201";
 
 //GPIO kde je teplotný senzor DS18B20 pripojený je
