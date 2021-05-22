@@ -23,8 +23,8 @@
 #include <DallasTemperature.h>
 
 // Update these with values suitable for your network.
-const char* ssid = "EaVFSmartConnect";
-const char* password = "Viligamos1?";
+const char* ssid = "SSSSS";
+const char* password = "CCCCC";
 const char* mqtt_server = "10.255.1.201";
 
 //GPIO kde je teplotný senzor DS18B20 pripojený je 
