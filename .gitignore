@@ -33,3 +33,4 @@
 
 # Password files
 *_secrets.h
+*gitignore
